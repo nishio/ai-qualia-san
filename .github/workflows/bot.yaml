@@ -1,9 +1,9 @@
-name: embed omoikane
+name: bot
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *' # every hour
+    - cron: '5 * * * *' # every hour
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
