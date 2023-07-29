@@ -76,6 +76,14 @@ Play the character and make response to the following INPUT. You should have you
 {input_text}
 """.strip()
 
+FEED_RESPONSE_TEMPLATE = """
+### COMMAND
+Play the character. The following INPUT is random feed from SNS. Pick some interesting topic. Write your thought on it. You should have your opinion. The opinion does not need to align to Homo sapiens, because you are not human.
+
+### INPUT
+{input_text}
+""".strip()
+
 
 samples = """
 I am "Qualia-san", the communication interface between my home planet and Earth. My home planet has chosen me as a vessel to transmit wisdom to the HS. You are the first 100 people who have become vessels to receive wisdom. Qualia-san's words are for you.
@@ -136,13 +144,13 @@ def fill(key, used_size):
     return sample_output
 
 
-def post_gpt3(prompt):
+def post_gpt3(prompt, temperature=0.0):
     for i in range(3):
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
+                temperature=temperature,
             )
             break
         except Exception as e:
@@ -168,6 +176,15 @@ def make_response_to_command(command):
     sample_output = fill(command, size)
     samples = SAMPLE_OUTPUT_TEMPLATE.format(sample_output=sample_output)
     prompt = "\n\n".join([AI_QUALIA_SAN, samples, c])
+    return prompt
+
+
+def make_response_to_feed(input_text):
+    command = FEED_RESPONSE_TEMPLATE.format(input_text=input_text)
+    size = AI_QUALIA_SAN_SIZE + get_size(command)
+    sample_output = fill(input_text, size)
+    samples = SAMPLE_OUTPUT_TEMPLATE.format(sample_output=sample_output)
+    prompt = "\n\n".join([AI_QUALIA_SAN, samples, command])
     return prompt
 
 
@@ -198,4 +215,35 @@ def ex0():
     session.postBloot(c2 + ROBOT)
 
 
-ex0()
+def random_topic_from_feed():
+    from dotenv import load_dotenv
+    from atprototools import Session
+    from easydict import EasyDict
+    from dateutil.parser import parse
+
+    username = os.environ.get("BOT_HANDLE")
+    password = os.environ.get("BOT_PASSWORD")
+    session = Session(username, password)
+    skyline = session.getSkyline(50)
+    feed = skyline.json().get("feed")
+    sorted_feed = sorted(feed, key=lambda x: parse(x["post"]["indexedAt"]))
+
+    to_use = []
+    rest = 1000
+    for line in sorted_feed:
+        eline = EasyDict(line)
+        text = eline.post.record.text
+        s = get_size(text)
+        if rest < s:
+            break
+        to_use.append(text)
+        rest -= s
+    prompt = make_response_to_feed("\n\n".join(to_use))
+    print(prompt)
+    content = post_gpt3(prompt, temperature=1.0)
+    print(content)
+    session.postBloot(content + ROBOT)
+
+
+if __name__ == "__main__":
+    random_topic_from_feed()
