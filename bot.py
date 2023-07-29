@@ -221,6 +221,7 @@ def random_topic_from_feed():
     from easydict import EasyDict
     from dateutil.parser import parse
 
+    load_dotenv()
     username = os.environ.get("BOT_HANDLE")
     password = os.environ.get("BOT_PASSWORD")
     session = Session(username, password)
