@@ -204,7 +204,6 @@ def ex0():
 
     print(c2)
 
-    from dotenv import load_dotenv
     from atprototools import Session
 
     username = os.environ.get("BOT_HANDLE")
@@ -216,13 +215,12 @@ def ex0():
 
 
 def random_topic_from_feed():
-    from dotenv import load_dotenv
     from atprototools import Session
     from easydict import EasyDict
     from dateutil.parser import parse
 
-    load_dotenv()
     username = os.environ.get("BOT_HANDLE")
+    print("username", username)
     password = os.environ.get("BOT_PASSWORD")
     session = Session(username, password)
     skyline = session.getSkyline(50)
