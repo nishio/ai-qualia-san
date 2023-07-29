@@ -1,94 +1,18 @@
 import os
 from dotenv import load_dotenv
 import time
-import sqlite3
 from atprototools import Session
 from easydict import EasyDict
-import gpt
 from datetime import datetime, timedelta, timezone
 import pytz
 from dateutil.parser import parse
-import random
-import util
 import json
 import requests
-import re
-import cairosvg
 
-
-# connection_atp = sqlite3.connect("atp.db")
-# cur = connection_atp.cursor()
-
-# cur.execute(
-#     """
-# CREATE TABLE IF NOT EXISTS users
-#   (id INTEGER PRIMARY KEY AUTOINCREMENT,
-#    did TEXT UNIQUE,
-#    handle TEXT,
-#    endpoint TEXT,
-#    created_at DATETIME
-#    )
-# """
-# )
-# connection_atp.commit()
-
-dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
-load_dotenv(dotenv_path)
+load_dotenv()
 
 username = os.environ.get("BOT_HANDLE")
 password = os.environ.get("BOT_PASSWORD")
-
-# connection = sqlite3.connect("bluesky_bot.db")
-# connection.row_factory = sqlite3.Row
-# cur = connection.cursor()
-
-# cur.execute(
-#     """
-# CREATE TABLE IF NOT EXISTS reactions
-#   (id INTEGER PRIMARY KEY AUTOINCREMENT,
-#    did TEXT,
-#    handle TEXT,
-#    displayName TEXT,
-#    created_at DATETIME
-#    )
-# """
-# )
-
-# cur.execute(
-#     """
-# CREATE TABLE IF NOT EXISTS users
-#   (id INTEGER PRIMARY KEY AUTOINCREMENT,
-#    did TEXT UNIQUE,
-#    mode INTEGER,
-#    analyze INTEGER,
-#    points INTEGER,
-#    all_points INTEGER,
-#    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-#    update_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-#    )
-# """
-# )
-
-# cur.execute(
-#     """
-# CREATE TRIGGER IF NOT EXISTS update_users_timestamp
-# AFTER UPDATE ON users
-# FOR EACH ROW
-# BEGIN
-#   UPDATE users SET update_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-# END;
-# """
-# )
-
-# cur.execute(
-#     """
-# CREATE TABLE IF NOT EXISTS count_post
-#   (id INTEGER PRIMARY KEY AUTOINCREMENT,
-#    count INTEGER,
-#    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-#    )
-# """
-# )
 
 
 def login(username, password):
@@ -106,74 +30,6 @@ def post(session, text):
     print(text)
     session.postBloot(text)
     # pass
-
-
-def reply_to(session, text, eline, image_path=None):
-    root_cid = None
-    root_uri = None
-    if "reply" in eline:
-        root_cid = eline.reply.root.cid
-        root_uri = eline.reply.root.uri
-
-    if root_cid:
-        root = {"cid": root_cid, "uri": root_uri}
-    else:
-        root = {"cid": eline.post.cid, "uri": eline.post.uri}
-
-    reply = {"cid": eline.post.cid, "uri": eline.post.uri}
-    reply_ref = {"root": root, "parent": reply}
-    chunk_size = 280
-    for i in range(0, len(text), chunk_size):
-        chunk = text[i : i + chunk_size]
-        if i == 0 and image_path:
-            response = post_image(session, chunk, image_path, reply_to=reply_ref)
-        else:
-            response = session.postBloot(chunk, reply_to=reply_ref)
-        reply = json.loads(response.text)
-        reply_ref["parent"] = reply
-
-
-def post_image(
-    session, postcontent, image_path, reply_to=None, content_type="image/png"
-):
-    """Post a bloot."""
-    timestamp = datetime.utcnow()
-    timestamp = timestamp.isoformat().replace("+00:00", "Z")
-
-    headers = {"Authorization": "Bearer " + session.ATP_AUTH_TOKEN}
-
-    data = {
-        "collection": "app.bsky.feed.post",
-        "$type": "app.bsky.feed.post",
-        "repo": "{}".format(session.DID),
-        "record": {
-            "$type": "app.bsky.feed.post",
-            "createdAt": timestamp,
-            "text": postcontent,
-        },
-    }
-
-    if image_path:
-        data["record"]["embed"] = {}
-        image_resp = session.uploadBlob(image_path, content_type)
-        data["record"]["embed"]["$type"] = "app.bsky.embed.images"
-        data["record"]["embed"]["images"] = [
-            {"alt": "", "image": image_resp.json().get("blob")}
-        ]
-    if reply_to:
-        data["record"]["reply"] = reply_to
-    resp = requests.post(
-        session.ATP_HOST + "/xrpc/com.atproto.repo.createRecord",
-        json=data,
-        headers=headers,
-    )
-
-    return resp
-
-
-def get_profile(session, handle):
-    response = session.get_profile(handle)
-    return json.loads(response.text)
 
 
 def _get_follows(session, handle, limit=100, cursor=None):
@@ -290,56 +146,56 @@ def detect_other_mention(eline):
     return False
 
 
-while True:
-    if (datetime.now(pytz.utc) - login_time) > timedelta(minutes=30):
-        session = login(username, password)
-        login_time = datetime.now(pytz.utc)
+post(session, f"🤖test")
 
-    skyline = session.getSkyline(50)
-    feed = skyline.json().get("feed")
-    sorted_feed = sorted(feed, key=lambda x: parse(x["post"]["indexedAt"]))
-    bot_followers = get_followers(session, username)
 
-    for line in sorted_feed:
-        eline = EasyDict(line)
-        if eline.post.author.handle == username:
-            # 自分自身には反応しない
-            continue
-        # print(eline.post.indexedAt)
-        postDatetime = parse(eline.post.indexedAt)
-        print(now, postDatetime)
-        if now < postDatetime:
-            # フォロワのみ反応する
-            print(postDatetime)
-            if not is_follower(
-                session, username, eline.post.author.handle, followers=bot_followers
-            ):
-                print("not follower")
+def mainloop():
+    while True:
+        if (datetime.now(pytz.utc) - login_time) > timedelta(minutes=30):
+            session = login(username, password)
+            login_time = datetime.now(pytz.utc)
+
+        skyline = session.getSkyline(50)
+        feed = skyline.json().get("feed")
+        sorted_feed = sorted(feed, key=lambda x: parse(x["post"]["indexedAt"]))
+        bot_followers = get_followers(session, username)
+
+        for line in sorted_feed:
+            eline = EasyDict(line)
+            if eline.post.author.handle == username:
+                # 自分自身には反応しない
                 continue
+            # print(eline.post.indexedAt)
+            postDatetime = parse(eline.post.indexedAt)
+            print(now, postDatetime)
+            if now < postDatetime:
+                # フォロワのみ反応する
+                print(postDatetime)
+                if not is_follower(
+                    session, username, eline.post.author.handle, followers=bot_followers
+                ):
+                    print("not follower")
+                    continue
 
-            if "reason" in eline:
-                print("reason")
-                continue
+                if "reason" in eline:
+                    print("reason")
+                    continue
 
-            if detect_other_mention(eline):
-                # 他の人にメンションがある時はスルー
-                print("other mention")
+                if detect_other_mention(eline):
+                    # 他の人にメンションがある時はスルー
+                    print("other mention")
+                    now = postDatetime
+                    continue
+                print(line)
+
+                did = eline.post.author.did.replace("did:plc:", "")
+                text = eline.post.record.text
+                name = (
+                    eline.post.author.displayName
+                    if "displayName" in eline.post.author
+                    else eline.post.author.handle.split(".", 1)[0]
+                )
+                print(name, text)
                 now = postDatetime
-                continue
-            print(line)
 
-            did = eline.post.author.did.replace("did:plc:", "")
-            text = eline.post.record.text
-            name = (
-                eline.post.author.displayName
-                if "displayName" in eline.post.author
-                else eline.post.author.handle.split(".", 1)[0]
-            )
-            print(name, text)
-            now = postDatetime
-
-    # print("sleep")
-    # time.sleep(3)
-
-    post(session, f"🤖test")
-    break
+        time.sleep(3)
