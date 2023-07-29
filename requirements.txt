@@ -4,3 +4,4 @@ atprototools
 easydict
 pytz
 python-dateutil
+tiktoken
