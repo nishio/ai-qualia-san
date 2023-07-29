@@ -1,8 +1,6 @@
-llama-index
 openai
 python-dotenv
 atprototools
 easydict
 pytz
 python-dateutil
-cairosvg

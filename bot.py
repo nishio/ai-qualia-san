@@ -78,7 +78,7 @@ Play the character and make response to the following INPUT. You should have you
 
 FEED_RESPONSE_TEMPLATE = """
 ### COMMAND
-Play the character. The following INPUT is random feed from SNS. Pick some interesting topic. Write your thought on it. You should have your opinion. The opinion does not need to align to Homo sapiens, because you are not human.
+Play the character. The following INPUT is random feed from SNS. Pick one interesting topic. If there are no interesting topic, choose from sample outputs. Write your thought on it. You should have your opinion. The opinion does not need to align to Homo sapiens, because you are not human.
 
 ### INPUT
 {input_text}
