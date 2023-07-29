@@ -144,11 +144,11 @@ def fill(key, used_size):
     return sample_output
 
 
-def post_gpt3(prompt, temperature=0.0):
+def post_gpt(prompt, temperature=0.0, model="gpt-3.5-turbo"):
     for i in range(3):
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=temperature,
             )
@@ -192,12 +192,12 @@ def ex0():
     command = "Say hello. Describe about Twitter is going unstabile and better Bluesky's Decentrized Identity. It is a good thing. Don't say It's day XX."
     prompt = make_response_to_command(command)
     print(prompt)
-    content = post_gpt3(prompt)
+    content = post_gpt(prompt)
     print(content)
     # c2 = post_gpt3(
     #     "It it is English translate to Japanese, vice verse.\n###\n" + content
     # )
-    c2 = post_gpt3(
+    c2 = post_gpt(
         "Choose random language except for English and Japanese. Then translate following text into the language.\n###\n"
         + content
     )
@@ -239,7 +239,7 @@ def random_topic_from_feed():
         rest -= s
     prompt = make_response_to_feed("\n\n".join(to_use))
     print(prompt)
-    content = post_gpt3(prompt, temperature=1.0)
+    content = post_gpt(prompt, temperature=1.0)
     print(content)
     session.postBloot(content + ROBOT)
 
