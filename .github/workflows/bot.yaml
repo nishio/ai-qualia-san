@@ -3,10 +3,12 @@ name: bot
 on:
   workflow_dispatch:
   schedule:
-    - cron: '5 * * * *' # every hour
+    - cron: '10 * * * *' # every hour
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  BOT_HANDLE: ${{ secrets.BOT_HANDLE }}
+  BOT_PASSWORD: ${{ secrets.BOT_PASSWORD }}
 
 jobs:
   build:
