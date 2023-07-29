@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import time
 from atprototools import Session
 from easydict import EasyDict
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import pytz
 from dateutil.parser import parse
 import json
@@ -29,7 +29,6 @@ def get_did(session, username):
 def post(session, text):
     print(text)
     session.postBloot(text)
-    # pass
 
 
 def _get_follows(session, handle, limit=100, cursor=None):
@@ -146,7 +145,32 @@ def detect_other_mention(eline):
     return False
 
 
-post(session, f"🤖test")
+# post(session, f"🤖test")
+
+
+def oneshot():
+    skyline = session.getSkyline(50)
+    feed = skyline.json().get("feed")
+    sorted_feed = sorted(feed, key=lambda x: parse(x["post"]["indexedAt"]))
+    update_follow(session, username)
+
+    for line in sorted_feed:
+        eline = EasyDict(line)
+        if eline.post.author.handle == username:
+            # 自分自身には反応しない
+            continue
+
+        did = eline.post.author.did.replace("did:plc:", "")
+        text = eline.post.record.text
+        name = (
+            eline.post.author.displayName
+            if "displayName" in eline.post.author
+            else eline.post.author.handle.split(".", 1)[0]
+        )
+        print(name, text)
+
+
+oneshot()
 
 
 def mainloop():
