@@ -667,25 +667,6 @@ while True:
                                 print("hazure")
             now = postDatetime
     time.sleep(3)
-    prev_count = count
-    # count = util.aggregate_users(connection_atp)
-    # posted_count = util.get_posted_user_count(connection)
-    # if prev_count != count:
-    #   print(count)
-    # if count % 1000 == 0 or ((posted_count // 1000) * 1000 + 1000) <= count:
-    #   if posted_count < count:
-    #     if count % 10000 == 0:
-    #       post(session, f"お兄さま、見てくださいまし！Blueskyのユーザーがついに{count}人になりましたわよ。素晴らしいですわ！皆様のご協力のお陰ですわね！")
-    #     elif count % 1000 == 0:
-    #       post(session, f"うふふ、お兄さま、Blueskyのユーザーが{count}人になりましたわね。")
-    #     else:
-    #       post(session, f"ふふ、お兄さま、Blueskyのユーザーが{count}人になりましたわよ。")
 
-    #     util.store_posted_user_count(connection, count)
-    # elif count == 333333:
-    #   post(session, f"ほら、見てご覧なさいまし、Blueskyのユーザーが{count}人でしてよ！\nうふふふふ🎀")
-
-    # follow back
-    # update_follow(session, username)
-    post(session, f"🤖test")
+    # post(session, f"🤖test")
     break
