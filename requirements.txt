@@ -5,3 +5,4 @@ easydict
 pytz
 python-dateutil
 tiktoken
+numpy
