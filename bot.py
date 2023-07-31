@@ -285,10 +285,12 @@ def random_topic_from_past_post():
     ja = translate_to_japanese(content)
     sleep(60)
     session.postBloot(ja + ROBOT)
+    print(ja)
 
     other = translate_to_random(content)
     sleep(60)
     session.postBloot(other + ROBOT)
+    print(other)
 
 
 if __name__ == "__main__":
