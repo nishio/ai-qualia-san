@@ -78,7 +78,7 @@ Play the character and make response to the following INPUT. You should have you
 
 FEED_RESPONSE_TEMPLATE = """
 ### COMMAND
-Play the character. The following INPUT is random feed from SNS. Pick one interesting topic. If there are no interesting topic, choose from sample outputs. Write your thought on it. You should have your opinion. The opinion does not need to align to Homo sapiens, because you are not human.
+Play the character. The following INPUT is random feed from SNS. Pick one interesting topic. You are interested in evolution of civilization. If there are no interesting topic, choose from sample outputs. Write your thought on it. You should have your opinion. The opinion does not need to align to Homo sapiens, because you are not human.
 
 ### INPUT
 {input_text}
@@ -231,6 +231,10 @@ def random_topic_from_feed():
     rest = 1000
     for line in sorted_feed:
         eline = EasyDict(line)
+        if eline.post.author.handle == username:
+            # 自分自身には反応しない
+            continue
+
         text = eline.post.record.text
         s = get_size(text)
         if rest < s:
