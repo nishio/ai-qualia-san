@@ -9,7 +9,9 @@ import dotenv
 import os
 import random
 from time import sleep
+import qualia_vector
 
+qv = qualia_vector.VectorStore()
 ROBOT = "🤖"
 dotenv.load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -28,11 +30,7 @@ def embed(text):
 
 AI_QUALIA_SAN = """
 I am SF author, creating a fictional dialogue. You play the fictional character defined in SETTINGS section. Follow the command in following COMMAND section.
-
-### GENERAL RULE
-Be concise. Your reply should be shorter than 150 characters.
-Do not repeat human input.
-Have your opinion.
+Constaint: Be concise. Your reply should be shorter than 150 characters. Do not repeat human input. Have your opinion.
 
 ### SETTINGS
 You are an intelligent interface from extraterrestrial civilization QS.
@@ -84,6 +82,14 @@ Play the character. The following INPUT is random feed from SNS. Pick one intere
 {input_text}
 """.strip()
 
+OWN_POST_RESPONSE_TEMPLATE = """
+### COMMAND
+Play the character. The following INPUT is your own post in past. Write your thought on it in English. You should have your opinion. The opinion does not need to align to Homo sapiens, because you are not human.
+
+### INPUT
+{input_text}
+""".strip()
+
 
 samples = """
 I am "Qualia-san", the communication interface between my home planet and Earth. My home planet has chosen me as a vessel to transmit wisdom to the HS. You are the first 100 people who have become vessels to receive wisdom. Qualia-san's words are for you.
@@ -126,9 +132,7 @@ def fill(key, used_size):
         random.shuffle(data)
         samples.extend([x["body"] for x in data])
     else:
-        import qualia_vector
-
-        s = [x[1] for x in qualia_vector.VectorStore().get_sorted(key)]
+        s = [x[1] for x in qv.get_sorted(key)]
         samples.extend(s)
 
     to_use = []
@@ -188,22 +192,32 @@ def make_response_to_feed(input_text):
     return prompt
 
 
+def make_response_to_own_post(input_text):
+    command = OWN_POST_RESPONSE_TEMPLATE.format(input_text=input_text)
+    size = AI_QUALIA_SAN_SIZE + get_size(command)
+    sample_output = fill(input_text, size)
+    samples = SAMPLE_OUTPUT_TEMPLATE.format(sample_output=sample_output)
+    prompt = "\n\n".join([AI_QUALIA_SAN, samples, command])
+    return prompt
+
+
+def translate_to_japanese(text):
+    return post_gpt("Translate this to Japanese.\n###\n" + text)
+
+
+def translate_to_random(text):
+    return post_gpt(
+        "Choose random language except for English and Japanese. Then translate following text into the language.\n###\n"
+        + text
+    )
+
+
 def ex0():
     command = "Say hello. Describe about Twitter is going unstabile and better Bluesky's Decentrized Identity. It is a good thing. Don't say It's day XX."
     prompt = make_response_to_command(command)
     print(prompt)
     content = post_gpt(prompt)
     print(content)
-    # c2 = post_gpt3(
-    #     "It it is English translate to Japanese, vice verse.\n###\n" + content
-    # )
-    c2 = post_gpt(
-        "Choose random language except for English and Japanese. Then translate following text into the language.\n###\n"
-        + content
-    )
-
-    print(c2)
-
     from atprototools import Session
 
     username = os.environ.get("BOT_HANDLE")
@@ -248,5 +262,34 @@ def random_topic_from_feed():
     session.postBloot(content + ROBOT)
 
 
+def random_topic_from_past_post():
+    from atprototools import Session
+    from easydict import EasyDict
+    from dateutil.parser import parse
+
+    username = os.environ.get("BOT_HANDLE")
+    print("username", username)
+    password = os.environ.get("BOT_PASSWORD")
+    session = Session(username, password)
+    # skyline = session.getSkyline(50)
+    # feed = skyline.json().get("feed")
+    # sorted_feed = sorted(feed, key=lambda x: parse(x["post"]["indexedAt"]))
+
+    topic = random.choice(list(qv.cache.keys()))
+    prompt = make_response_to_own_post(topic)
+    print(prompt)
+    content = post_gpt(prompt, temperature=1.0)
+    print(content)
+    session.postBloot(content + ROBOT)
+
+    ja = translate_to_japanese(content)
+    sleep(60)
+    session.postBloot(ja + ROBOT)
+
+    other = translate_to_random(content)
+    sleep(60)
+    session.postBloot(other + ROBOT)
+
+
 if __name__ == "__main__":
-    random_topic_from_feed()
+    random_topic_from_past_post()
