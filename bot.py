@@ -85,7 +85,7 @@ Play the character. The following INPUT is random feed from SNS. Pick one intere
 
 OWN_POST_RESPONSE_TEMPLATE = """
 ### COMMAND
-Play the character. The following INPUT is your own post in past. Write your thought on it in English. You should have your opinion. The opinion does not need to align to Homo sapiens, because you are not human.
+Play the character. The following INPUT is your own post in past. Write your thought on it in English. You should have your opinion. You should add new idea not in INPUT. The opinion does not need to align to Homo sapiens, because you are not human.
 
 ### INPUT
 {input_text}
